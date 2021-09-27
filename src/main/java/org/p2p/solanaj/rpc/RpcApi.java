@@ -1,21 +1,12 @@
 package org.p2p.solanaj.rpc;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 import org.p2p.solanaj.core.Account;
 import org.p2p.solanaj.core.PublicKey;
 import org.p2p.solanaj.core.Transaction;
+import org.p2p.solanaj.rpc.types.*;
 import org.p2p.solanaj.rpc.types.ConfigObjects.*;
-import org.p2p.solanaj.rpc.types.AccountInfo;
-import org.p2p.solanaj.rpc.types.ConfirmedTransaction;
-import org.p2p.solanaj.rpc.types.ProgramAccount;
-import org.p2p.solanaj.rpc.types.RecentBlockhash;
-import org.p2p.solanaj.rpc.types.RpcSendTransactionConfig;
-import org.p2p.solanaj.rpc.types.SignatureInformation;
 import org.p2p.solanaj.rpc.types.RpcResultTypes.ValueLong;
 import org.p2p.solanaj.rpc.types.RpcSendTransactionConfig.Encoding;
 import org.p2p.solanaj.ws.SubscriptionWebSocketClient;
@@ -137,6 +128,21 @@ public class RpcApi {
         params.add(new RpcSendTransactionConfig());
 
         return client.call("getAccountInfo", params, AccountInfo.class);
+    }
+
+    public TokenAccount getTokenAccountsByOwner(PublicKey owner, String mint) throws RpcException {
+        List<Object> params = new ArrayList<Object>();
+
+        params.add(owner.toString());
+        if (mint != null) {
+            HashMap<String, String> mintParams = new HashMap<>();
+            mintParams.put("mint", mint);
+            params.add(mintParams);
+        }
+
+        params.add(new RpcSendTransactionConfig());
+
+        return client.call("getTokenAccountsByOwner", params, TokenAccount.class);
     }
 
     public long getMinimumBalanceForRentExemption(long dataLength) throws RpcException {
