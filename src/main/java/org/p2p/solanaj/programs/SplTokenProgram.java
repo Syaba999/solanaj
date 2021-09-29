@@ -3,7 +3,6 @@ package org.p2p.solanaj.programs;
 import org.p2p.solanaj.core.PublicKey;
 import org.p2p.solanaj.core.TransactionInstruction;
 import org.p2p.solanaj.core.AccountMeta;
-
 import java.util.ArrayList;
 
 import static org.bitcoinj.core.Utils.*;
@@ -19,9 +18,9 @@ public class SplTokenProgram {
         keys.add(new AccountMeta(new PublicKey(toAddress), false, true));
         keys.add(new AccountMeta(owner, true, true));
 
-        byte[] data = new byte[4 + 8];
-        uint32ToByteArrayLE(PROGRAM_INDEX_TRANSFER_SPL, data, 0);
-        int64ToByteArrayLE(lamports, data, 4);
+        byte[] data = new byte[1 + 8];
+        data[0] = PROGRAM_INDEX_TRANSFER_SPL;
+        int64ToByteArrayLE(lamports, data, 1);
 
         return new TransactionInstruction(PROGRAM_ID, keys, data);
     }

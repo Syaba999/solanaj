@@ -139,8 +139,9 @@ public class RpcApi {
             mintParams.put("mint", mint);
             params.add(mintParams);
         }
-
-        params.add(new RpcSendTransactionConfig());
+        HashMap<String,String> encodingParams = new HashMap<>();
+        encodingParams.put("encoding", "jsonParsed");
+        params.add(encodingParams);
 
         return client.call("getTokenAccountsByOwner", params, TokenAccount.class);
     }
