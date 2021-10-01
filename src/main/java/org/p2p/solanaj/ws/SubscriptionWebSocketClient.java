@@ -64,11 +64,23 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
     }
 
-    public void accountSubscribe(String key, NotificationEventListener listener) {
+    public void accountSubscribe(String accountPKey, NotificationEventListener listener) {
         List<Object> params = new ArrayList<Object>();
-        params.add(key);
+        params.add(accountPKey);
 
         RpcRequest rpcRequest = new RpcRequest("accountSubscribe", params);
+
+        subscriptions.put(rpcRequest.getId(), new SubscriptionParams(rpcRequest, listener));
+        subscriptionIds.put(rpcRequest.getId(), null);
+
+        updateSubscriptions();
+    }
+
+    public void programSubscribe(String programId, NotificationEventListener listener) {
+        List<Object> params = new ArrayList<Object>();
+        params.add(programId);
+
+        RpcRequest rpcRequest = new RpcRequest("programSubscribe", params);
 
         subscriptions.put(rpcRequest.getId(), new SubscriptionParams(rpcRequest, listener));
         subscriptionIds.put(rpcRequest.getId(), null);

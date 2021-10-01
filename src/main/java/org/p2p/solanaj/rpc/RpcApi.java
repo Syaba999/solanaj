@@ -70,6 +70,17 @@ public class RpcApi {
         return client.call("getConfirmedTransaction", params, ConfirmedTransaction.class);
     }
 
+    public ConfirmedTransaction getTransaction(String signature) throws RpcException {
+        List<Object> params = new ArrayList<Object>();
+
+        params.add(signature);
+        // TODO jsonParsed, base58, base64
+        // the default encoding is JSON
+        // params.add("json");
+
+        return client.call("getTransaction", params, ConfirmedTransaction.class);
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public List<SignatureInformation> getConfirmedSignaturesForAddress2(PublicKey account, int limit)
             throws RpcException {
@@ -169,6 +180,14 @@ public class RpcApi {
         params.add(lamports);
 
         return client.call("requestAirdrop", params, String.class);
+    }
+
+    public SolanaVersion getVersion() throws RpcException {
+        return client.call("getVersion", List.of(), SolanaVersion.class);
+    }
+
+    public long getTransactionCount() throws RpcException {
+        return client.call("getTransactionCount", List.of(), Long.class);
     }
 
 }
