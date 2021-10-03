@@ -1,13 +1,20 @@
 package org.p2p.solanaj.core;
 
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import org.p2p.solanaj.programs.SystemProgram;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.Base64;
 
 import org.bitcoinj.core.Base58;
+import org.p2p.solanaj.rpc.types.ConfirmedTransaction;
 
 public class TransactionTest {
 
@@ -31,4 +38,19 @@ public class TransactionTest {
                 Base64.getEncoder().encodeToString(serializedTransaction));
     }
 
+    @Test
+    public void marshallUnmarshallTransaction() throws URISyntaxException, IOException {
+        File resource = new File(this.getClass().getClassLoader().getResource("transaction.json").getFile());
+        String transactionJson = Files.readString(resource.toPath());
+
+        JsonAdapter<ConfirmedTransaction> adapter = new Moshi.Builder().build().adapter(ConfirmedTransaction.class);
+        ConfirmedTransaction transaction = adapter.fromJson(transactionJson);
+
+        ConfirmedTransaction.TokenBalance tokenBalance = transaction.getMeta().getPostTokenBalances().get(0);
+        assertEquals(tokenBalance.getMint(), "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+        assertEquals(tokenBalance.getUiTokenAmount().getAmount(), "280000");
+        assertEquals(tokenBalance.getUiTokenAmount().getDecimals(), Integer.valueOf(6));
+        assertEquals(tokenBalance.getUiTokenAmount().getUiAmountString(), "0.28");
+        assertEquals(tokenBalance.getUiTokenAmount().getUiAmount(), Float.valueOf(0.28f));
+    }
 }

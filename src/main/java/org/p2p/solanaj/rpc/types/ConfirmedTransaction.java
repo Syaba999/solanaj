@@ -104,6 +104,10 @@ public class ConfirmedTransaction {
         private List<Long> postBalances = null;
         @Json(name = "preBalances")
         private List<Long> preBalances = null;
+        @Json(name = "postTokenBalances")
+        private List<TokenBalance> postTokenBalances = null;
+        @Json(name = "preTokenBalances")
+        private List<TokenBalance> preTokenBalances = null;
         @Json(name = "status")
         private Status status;
 
@@ -127,10 +131,71 @@ public class ConfirmedTransaction {
             return preBalances;
         }
 
+        public List<TokenBalance> getPostTokenBalances() {
+            return postTokenBalances;
+        }
+
+        public List<TokenBalance> getPreTokenBalances() {
+            return preTokenBalances;
+        }
+
         public Status getStatus() {
             return status;
         }
 
+    }
+
+    public static class TokenBalance {
+        @Json(name = "accountIndex")
+        private Integer accountIndex;
+
+        @Json(name = "mint")
+        private String mint;
+
+        @Json(name = "uiTokenAmount")
+        private TokenBalanceAmount uiTokenAmount;
+
+        public Integer getAccountIndex() {
+            return accountIndex;
+        }
+
+        public String getMint() {
+            return mint;
+        }
+
+        public TokenBalanceAmount getUiTokenAmount() {
+            return uiTokenAmount;
+        }
+    }
+
+    public static class TokenBalanceAmount {
+        @Json(name = "amount")
+        private String amount;
+
+        @Json(name = "decimals")
+        private Integer decimals;
+
+        @Json(name = "uiAmount")
+        private Float uiAmount;
+
+        @Json(name = "uiAmountString")
+        private String uiAmountString;
+
+        public String getAmount() {
+            return amount;
+        }
+
+        public Integer getDecimals() {
+            return decimals;
+        }
+
+        public Float getUiAmount() {
+            return uiAmount;
+        }
+
+        public String getUiAmountString() {
+            return uiAmountString;
+        }
     }
 
     public static class Transaction {
