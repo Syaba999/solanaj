@@ -2,6 +2,7 @@ package org.p2p.solanaj.rpc;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.p2p.solanaj.core.Account;
 import org.p2p.solanaj.core.PublicKey;
 import org.p2p.solanaj.core.Transaction;
@@ -20,17 +21,26 @@ public class RpcApi {
     }
 
     public String getRecentBlockhash() throws RpcException {
-        return client.call("getRecentBlockhash", null, RecentBlockhash.class).getRecentBlockhash();
+        return client.call("getRecentBlockhash", Collections.emptyList(), RecentBlockhash.class).getRecentBlockhash();
     }
 
-    public String sendTransaction(Transaction transaction, Account signer) throws RpcException {
-        return sendTransaction(transaction, Arrays.asList(signer));
+    public String sendTransaction(Transaction transaction, Account ... signers) throws RpcException {
+        List<Object> params = prepareTransactionParams(transaction, signers);
+
+        return client.call("sendTransaction", params, String.class);
     }
 
-    public String sendTransaction(Transaction transaction, List<Account> signers) throws RpcException {
+    public String simulateTransaction(Transaction transaction, Account ... signers) throws RpcException {
+        List<Object> params = prepareTransactionParams(transaction, signers);
+
+        return client.call("simulateTransaction", params, String.class);
+    }
+
+    @NotNull
+    private List<Object> prepareTransactionParams(Transaction transaction, Account[] signers) throws RpcException {
         String recentBlockhash = getRecentBlockhash();
         transaction.setRecentBlockHash(recentBlockhash);
-        transaction.sign(signers);
+        transaction.sign(Arrays.asList(signers));
         byte[] serializedTransaction = transaction.serialize();
 
         String base64Trx = Base64.getEncoder().encodeToString(serializedTransaction);
@@ -39,12 +49,13 @@ public class RpcApi {
 
         params.add(base64Trx);
         params.add(new RpcSendTransactionConfig());
-
-        return client.call("sendTransaction", params, String.class);
+        return params;
     }
 
-    public void sendAndConfirmTransaction(Transaction transaction, List<Account> signers,
-            NotificationEventListener listener) throws RpcException {
+    public void sendAndConfirmTransaction(Transaction transaction,
+                                          NotificationEventListener listener,
+                                          Account ... signers
+            ) throws RpcException {
         String signature = sendTransaction(transaction, signers);
 
         SubscriptionWebSocketClient subClient = SubscriptionWebSocketClient.getInstance(client.getEndpoint());
