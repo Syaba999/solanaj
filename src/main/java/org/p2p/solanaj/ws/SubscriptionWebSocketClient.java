@@ -124,13 +124,14 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
                 JsonAdapter<RpcNotificationResult> notificationResultAdapter = new Moshi.Builder().build()
                         .adapter(RpcNotificationResult.class);
                 RpcNotificationResult result = notificationResultAdapter.fromJson(message);
-                NotificationEventListener listener = subscriptionLinsteners.get(result.getParams().getSubscription());
+                long subscriptionId = result.getParams().getSubscription();
+                NotificationEventListener listener = subscriptionLinsteners.get(subscriptionId);
 
                 Map value = (Map) result.getParams().getResult().getValue();
 
                 switch (result.getMethod()) {
                     case "signatureNotification":
-                        listener.onNotifiacationEvent(new SignatureNotification(value.get("err")));
+                        listener.onNotifiacationEvent(new SignatureNotification(value.get("err"), subscriptionId));
                         break;
                     case "accountNotification":
                         listener.onNotifiacationEvent(value);
@@ -146,7 +147,6 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         System.out.println(
                 "Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: " + reason);
-
     }
 
     @Override

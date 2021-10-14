@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Base64;
+import java.util.Map;
 
 import org.bitcoinj.core.Base58;
 import org.p2p.solanaj.rpc.types.ConfirmedTransaction;
+import org.p2p.solanaj.rpc.types.RpcNotificationResult;
 
 public class TransactionTest {
 
@@ -39,7 +41,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void marshallUnmarshallTransaction() throws URISyntaxException, IOException {
+    public void marshallUnmarshallTransaction() throws IOException {
         File resource = new File(this.getClass().getClassLoader().getResource("transaction.json").getFile());
         String transactionJson = Files.readString(resource.toPath());
 
@@ -52,5 +54,21 @@ public class TransactionTest {
         assertEquals(tokenBalance.getUiTokenAmount().getDecimals(), Integer.valueOf(6));
         assertEquals(tokenBalance.getUiTokenAmount().getUiAmountString(), "0.28");
         assertEquals(tokenBalance.getUiTokenAmount().getUiAmount(), Float.valueOf(0.28f));
+    }
+
+    @Test
+    public void marshallUnmarshallSignatureNotification() throws IOException {
+        File resource = new File(this.getClass().getClassLoader().getResource("signatureNotification.json").getFile());
+        String signatureNtfJson = Files.readString(resource.toPath());
+        JsonAdapter<RpcNotificationResult> adapter = new Moshi.Builder().build().adapter(RpcNotificationResult.class);
+        RpcNotificationResult notification = adapter.fromJson(signatureNtfJson);
+
+        assertEquals("2.0", notification.getJsonrpc());
+        assertEquals("signatureNotification", notification.getMethod());
+        assertEquals(24006L, notification.getParams().getSubscription());
+
+        RpcNotificationResult.Result result = notification.getParams().getResult();
+        assertNull(((Map) result.getValue()).get("err"));
+        assertEquals(5207624, result.gContext().getSlot());
     }
 }
