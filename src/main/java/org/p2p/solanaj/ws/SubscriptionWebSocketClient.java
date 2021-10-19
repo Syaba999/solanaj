@@ -6,20 +6,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
+import org.java_websocket.AbstractWebSocket;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.p2p.solanaj.rpc.types.RpcNotificationResult;
 import org.p2p.solanaj.rpc.types.RpcRequest;
 import org.p2p.solanaj.rpc.types.RpcResponse;
 import org.p2p.solanaj.ws.listeners.NotificationEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SubscriptionWebSocketClient extends WebSocketClient {
-
+    private final Logger log = LoggerFactory.getLogger(SubscriptionWebSocketClient.class);
     private class SubscriptionParams {
         RpcRequest request;
         NotificationEventListener listener;
@@ -32,11 +37,11 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
     private static SubscriptionWebSocketClient instance;
 
-    private Map<String, SubscriptionParams> subscriptions = new HashMap<>();
+    private Map<String, SubscriptionParams> subscriptions = new ConcurrentHashMap<>();
     private Map<String, Long> subscriptionIds = new HashMap<>();
-    private Map<Long, NotificationEventListener> subscriptionLinsteners = new HashMap<>();
+    private Map<Long, NotificationEventListener> subscriptionLinsteners = new ConcurrentHashMap<>();
 
-    public static SubscriptionWebSocketClient getInstance(String endpoint) {
+    public static SubscriptionWebSocketClient getInstance(String endpoint, int connectionTimout) {
         URI endpointURI;
         URI serverURI;
 
@@ -48,7 +53,10 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
         }
 
         if (instance == null) {
-            instance = new SubscriptionWebSocketClient(serverURI);
+            if (connectionTimout == 0)
+                instance = new SubscriptionWebSocketClient(serverURI);
+            else
+                instance = new SubscriptionWebSocketClient(serverURI, connectionTimout);
         }
 
         if (!instance.isOpen()) {
@@ -61,7 +69,10 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
     public SubscriptionWebSocketClient(URI serverURI) {
         super(serverURI);
+    }
 
+    public SubscriptionWebSocketClient(URI serverURI, int connectionTimeout) {
+        super(serverURI, new Draft_6455(), null, connectionTimeout);
     }
 
     public void accountSubscribe(String accountPKey, NotificationEventListener listener) {
@@ -108,6 +119,7 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
     @SuppressWarnings({ "rawtypes" })
     @Override
     public void onMessage(String message) {
+        log.debug("Websockets. Got Message: " + message);
         JsonAdapter<RpcResponse<Long>> resultAdapter = new Moshi.Builder().build()
                 .adapter(Types.newParameterizedType(RpcResponse.class, Long.class));
 
@@ -115,7 +127,7 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
             RpcResponse<Long> rpcResult = resultAdapter.fromJson(message);
             String rpcResultId = rpcResult.getId();
             if (rpcResultId != null) {
-                if (subscriptionIds.containsKey(rpcResultId)) {
+                if (subscriptions.containsKey(rpcResultId)) {
                     subscriptionIds.put(rpcResultId, rpcResult.getResult());
                     subscriptionLinsteners.put(rpcResult.getResult(), subscriptions.get(rpcResultId).listener);
                     subscriptions.remove(rpcResultId);
@@ -131,26 +143,32 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
                 switch (result.getMethod()) {
                     case "signatureNotification":
-                        listener.onNotifiacationEvent(new SignatureNotification(value.get("err"), subscriptionId));
+                        listener.onNotifiacationEvent(subscriptionId, new SignatureNotification(value.get("err")));
                         break;
                     case "accountNotification":
-                        listener.onNotifiacationEvent(value);
+                        listener.onNotifiacationEvent(subscriptionId, value);
                         break;
                 }
             }
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error("Error processing message [" + message + "]", ex);
         }
     }
 
     @Override
+    public void onCloseInitiated(int code, String reason) {
+        log.trace("onCloseInitiated called. Reconnecting");
+        reconnect();
+    }
+
+    @Override
     public void onClose(int code, String reason, boolean remote) {
-        System.out.println(
-                "Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: " + reason);
+        log.trace("Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: " + reason);
     }
 
     @Override
     public void onError(Exception ex) {
+        log.error("Websocket error", ex);
         ex.printStackTrace();
     }
 

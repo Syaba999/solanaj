@@ -58,7 +58,7 @@ public class RpcApi {
             ) throws RpcException {
         String signature = sendTransaction(transaction, signers);
 
-        SubscriptionWebSocketClient subClient = SubscriptionWebSocketClient.getInstance(client.getEndpoint());
+        SubscriptionWebSocketClient subClient = SubscriptionWebSocketClient.getInstance(client.getEndpoint(), 0);
         subClient.signatureSubscribe(signature, listener);
     }
 
