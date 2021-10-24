@@ -70,10 +70,12 @@ public class RpcApi {
         return client.call("getBalance", params, ValueLong.class).getValue();
     }
 
-    public ConfirmedTransaction getConfirmedTransaction(String signature) throws RpcException {
+    public ConfirmedTransaction getConfirmedTransaction(String signature, String commitment) throws RpcException {
         List<Object> params = new ArrayList<Object>();
 
         params.add(signature);
+        if (commitment != null)
+            params.add(new Commitment(commitment));
         // TODO jsonParsed, base58, base64
         // the default encoding is JSON
         // params.add("json");
@@ -81,24 +83,21 @@ public class RpcApi {
         return client.call("getConfirmedTransaction", params, ConfirmedTransaction.class);
     }
 
-    public ConfirmedTransaction getTransaction(String signature) throws RpcException {
-        List<Object> params = new ArrayList<Object>();
+    public List<SignatureInformation> getConfirmedSignaturesForAddress2(PublicKey account, int limit) throws RpcException {
+        return getConfirmedSignaturesForAddress2Inner(account, new ConfirmedSignFAddr2(limit));
+    }
 
-        params.add(signature);
-        // TODO jsonParsed, base58, base64
-        // the default encoding is JSON
-        // params.add("json");
-
-        return client.call("getTransaction", params, ConfirmedTransaction.class);
+    public List<SignatureInformation> getConfirmedSignaturesForAddress2(PublicKey account, String commitment) throws RpcException {
+        return getConfirmedSignaturesForAddress2Inner(account, new Commitment(commitment));
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public List<SignatureInformation> getConfirmedSignaturesForAddress2(PublicKey account, int limit)
+    private List<SignatureInformation> getConfirmedSignaturesForAddress2Inner(PublicKey account, IParam param)
             throws RpcException {
         List<Object> params = new ArrayList<Object>();
 
         params.add(account.toString());
-        params.add(new ConfirmedSignFAddr2(limit));
+        params.add(param);
 
         List<AbstractMap> rawResult = client.call("getConfirmedSignaturesForAddress2", params, List.class);
 

@@ -12,13 +12,13 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
-import org.java_websocket.AbstractWebSocket;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.p2p.solanaj.rpc.types.RpcNotificationResult;
 import org.p2p.solanaj.rpc.types.RpcRequest;
 import org.p2p.solanaj.rpc.types.RpcResponse;
+import org.p2p.solanaj.rpc.types.RpcSendTransactionConfig;
 import org.p2p.solanaj.ws.listeners.NotificationEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,11 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
         try {
             endpointURI = new URI(endpoint);
-            serverURI = new URI(endpointURI.getScheme() == "https" ? "wss" : "ws" + "://" + endpointURI.getHost());
+            String uriStr = endpointURI.getScheme() == "https" ? "wss" : "ws" + "://" + endpointURI.getHost();
+            if (endpointURI.getPort() != -1)
+                uriStr += ":" + endpointURI.getPort();
+            uriStr += endpointURI.getRawPath();
+            serverURI = new URI(uriStr);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }
@@ -76,8 +80,16 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
     }
 
     public void accountSubscribe(String accountPKey, NotificationEventListener listener) {
+        accountSubscribe(accountPKey, listener, null);
+    }
+
+    public void accountSubscribe(String accountPKey, NotificationEventListener listener, String encoding) {
         List<Object> params = new ArrayList<Object>();
         params.add(accountPKey);
+        if (encoding != null) {
+            // params.add(new WsSubscriptionParams("jsonParsed", null));
+            params.add(new RpcSendTransactionConfig(RpcSendTransactionConfig.Encoding.jsonParsed));
+        }
 
         RpcRequest rpcRequest = new RpcRequest("accountSubscribe", params);
 
@@ -143,10 +155,10 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
                 switch (result.getMethod()) {
                     case "signatureNotification":
-                        listener.onNotifiacationEvent(subscriptionId, new SignatureNotification(value.get("err")));
+                        listener.onNotificationEvent(subscriptionId, new SignatureNotification(value.get("err")));
                         break;
                     case "accountNotification":
-                        listener.onNotifiacationEvent(subscriptionId, value);
+                        listener.onNotificationEvent(subscriptionId, value);
                         break;
                 }
             }
@@ -157,8 +169,7 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
     @Override
     public void onCloseInitiated(int code, String reason) {
-        log.trace("onCloseInitiated called. Reconnecting");
-        reconnect();
+        log.trace("onCloseInitiated called. ");
     }
 
     @Override

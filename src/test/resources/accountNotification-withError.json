@@ -1,0 +1,19 @@
+{
+  "jsonrpc": "2.0",
+  "method": "accountNotification",
+  "params": {
+    "result": {
+      "context": {
+        "slot": 102778467
+      },
+      "value": {
+        "lamports": 2039280,
+        "data": "error: data too large for bs58 encoding",
+        "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "executable": false,
+        "rentEpoch": 237
+      }
+    },
+    "subscription": 9312965
+  }
+}

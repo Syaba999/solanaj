@@ -8,7 +8,9 @@ import org.p2p.solanaj.rpc.types.RpcSendTransactionConfig.Encoding;
 
 public class ConfigObjects {
 
-    public static class ConfirmedSignFAddr2 {
+    public static interface IParam {}
+
+    public static class ConfirmedSignFAddr2 implements IParam{
         @Json(name = "limit")
         private long limit;
         @Json(name = "before")
@@ -16,8 +18,18 @@ public class ConfigObjects {
         @Json(name = "until")
         private String until;
 
+
         public ConfirmedSignFAddr2(int limit) {
             this.limit = limit;
+        }
+    }
+
+    public static class Commitment implements IParam {
+        @Json(name = "commitment")
+        private String commitment;
+
+        public Commitment(String commitment) {
+            this.commitment = commitment;
         }
     }
 
